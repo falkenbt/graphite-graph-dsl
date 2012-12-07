@@ -333,17 +333,22 @@ class GraphiteGraph
         graphite_target = "secondYAxis(#{graphite_target})" if target[:second_y_axis]
 
         unless target.include?(:subgroup)
+
+          if target[:alias_sub_search]
+            graphite_target = "aliasSub(#{graphite_target},\"#{target[:alias_sub_search]}\",\"#{target[:alias_sub_replace]}\")"
+          end
+
           if target[:alias_by_node]
             graphite_target = "aliasByNode(#{graphite_target},#{target[:alias_by_node]})"
-          elsif target[:alias_sub_search]
-            graphite_target = "aliasSub(#{graphite_target},\"#{target[:alias_sub_search]}\",\"#{target[:alias_sub_replace]}\")"
           elsif target[:alias]
             graphite_target = "alias(#{graphite_target},\"#{target[:alias]}\")"
           elsif target[:no_alias]
             graphite_target = graphite_target # no-op
           else
             graphite_target = "alias(#{graphite_target},\"#{name.to_s.capitalize}\")"
+          
           end
+
 
           if target[:cacti_style]
             graphite_target = "cactiStyle(#{graphite_target})"
