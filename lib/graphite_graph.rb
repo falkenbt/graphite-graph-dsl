@@ -51,7 +51,9 @@ class GraphiteGraph
                    :minor_grid_line_color => nil,
                    :area => :none,
                    :logbase => nil,
-                   :placeholders => nil}.merge(@overrides)
+                   :placeholders => nil,
+                   :area_alpha => nil,
+                   :unique_legend => nil}.merge(@overrides)
   end
 
   def [](key)
@@ -263,7 +265,6 @@ class GraphiteGraph
     return nil if properties[:surpress]
 
     url_parts = []
-    colors = []
 
     [:title, :vtitle, :from, :width, :height, :until].each do |item|
       url_parts << "#{item}=#{properties[item]}" if properties[item]
@@ -291,6 +292,9 @@ class GraphiteGraph
     url_parts << "fgcolor=#{properties[:foreground_color]}" if properties[:foreground_color]
     url_parts << "vtitleRight=#{properties[:vtitle_right]}" if properties[:vtitle_right]
     url_parts << "logBase=#{properties[:logbase]}" if properties[:logbase]
+    url_parts << "areaAlpha=#{properties[:area_alpha]}" if properties[:area_alpha]
+    url_parts << "minXStep=#{properties[:min_x_step]}" if properties[:min_x_step]
+    url_parts << "uniqueLegend=#{properties[:unique_legend]}" if properties[:unique_legend]
 
     target_order.each do |name|
       target = targets[name]
@@ -301,7 +305,6 @@ class GraphiteGraph
         raise "field #{name} does not have any data associated with it" unless target[:data]
 
         graphite_target = target[:data]
-       
         graphite_target = "lineWidth(#{graphite_target},#{target[:field_linewidth]})" if target[:field_linewidth]
         graphite_target = "keepLastValue(#{graphite_target})" if target[:keep_last_value]
         graphite_target = "sum(#{graphite_target})" if target[:sum]
@@ -355,8 +358,8 @@ class GraphiteGraph
     url_parts << "format=#{format}" if format
 
     if url
+      properties[:placeholders].each { |k,v| url_parts.each {|part| part.gsub!("%{#{k}}", v.to_s) } } if properties[:placeholders].is_a?(Hash)
       url_str = url_parts.map { |pair| k,v = pair.split('='); "#{k}=#{CGI.escape(v)}" }.join("&")
-      properties[:placeholders].each { |k,v| url_str.gsub!("%{#{k}}", v.to_s) } if properties[:placeholders].is_a?(Hash)
 
       url_str
     else
